@@ -1,0 +1,144 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Smart Portfolio Manager</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--ink:#1d2340;--mut:#6b7394;--pos:#08956a;--neg:#e0314b;--ac:#5b5bf0}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:linear-gradient(135deg,#eaf0ff 0%,#fdeef6 50%,#e6fbf2 100%) fixed;min-height:100vh;overflow-x:hidden}
+.smoke{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+.smoke i{position:absolute;border-radius:50%;filter:blur(70px);opacity:.55;animation:dr 22s ease-in-out infinite alternate}
+.smoke i:nth-child(1){width:46vw;height:46vw;left:-10vw;top:-12vw;background:#b9c4ff}
+.smoke i:nth-child(2){width:40vw;height:40vw;right:-8vw;top:10vh;background:#ffc6e0;animation-delay:-7s}
+.smoke i:nth-child(3){width:44vw;height:44vw;left:30vw;bottom:-18vw;background:#b5f1d9;animation-delay:-13s}
+@keyframes dr{to{transform:translate(6vw,5vh) scale(1.15)}}
+.wrap{max-width:1500px;margin:0 auto;padding:18px}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:14px}
+h1{margin:0;font-size:22px;letter-spacing:-.3px;background:linear-gradient(90deg,#4a4ae8,#d6338a);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--mut);font-size:12px}
+.tile{background:linear-gradient(145deg,rgba(255,255,255,.88),rgba(255,255,255,.55));backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.9);border-radius:18px;box-shadow:inset 0 1px 0 #fff,0 3px 0 rgba(140,150,215,.28),0 18px 34px -14px rgba(60,70,150,.38);padding:14px 16px;min-width:0}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.tab,.btn{border:0;cursor:pointer;font:600 13px inherit;font-family:inherit;color:var(--ink);padding:9px 15px;border-radius:12px;background:linear-gradient(180deg,#fff,#e9edff);box-shadow:0 3px 0 #c5ccf0,0 8px 14px -6px rgba(70,80,160,.4);transition:.15s}
+.tab:hover,.btn:hover{transform:translateY(-2px)}.tab:active,.btn:active{transform:translateY(2px);box-shadow:0 1px 0 #c5ccf0}
+.tab.on,.btn.pri{color:#fff;background:linear-gradient(135deg,#6a6af7,#c23cc0);box-shadow:0 3px 0 #4a3aa8,0 10px 16px -6px rgba(110,70,200,.55)}
+.grid{display:grid;gap:12px}.kpis{grid-template-columns:repeat(auto-fit,minmax(170px,1fr));margin-bottom:14px}
+.k .l{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--mut)}.k .v{font-size:21px;font-weight:700;margin-top:3px;word-break:break-word}
+.k:nth-child(1){border-top:4px solid #6a6af7}.k:nth-child(2){border-top:4px solid #29b6f6}.k:nth-child(3){border-top:4px solid #f5a524}.k:nth-child(4){border-top:4px solid #e0508d}.k:nth-child(5){border-top:4px solid #08956a}.k:nth-child(6){border-top:4px solid #8a5cf5}
+.sc{overflow-x:auto;border-radius:12px}
+table{border-collapse:separate;border-spacing:0;width:100%;white-space:nowrap}
+th{position:sticky;top:0;background:#eef1ff;color:#454d7a;font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:9px 10px;text-align:right}
+td{padding:8px 10px;text-align:right;border-bottom:1px solid rgba(120,130,190,.15)}
+th:first-child,td:first-child,th.tl,td.tl{text-align:left}
+tr:hover td{background:rgba(120,120,255,.07)}
+.p{color:var(--pos);font-weight:600}.n{color:var(--neg);font-weight:600}
+a.cc{color:var(--ac);font-weight:700;cursor:pointer;text-decoration:underline dotted}
+.chip{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:700;background:#e6e9ff;color:#4a4ae8;margin:2px}
+.chip.g{background:#d9f7ea;color:var(--pos)}.chip.r{background:#ffe1e6;color:var(--neg)}.chip.a{background:#fff0d1;color:#b36b00}
+.tick{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.tick .tile{padding:10px 12px}.tick input{width:100%;font:700 16px inherit;font-family:inherit;border:0;background:rgba(255,255,255,.7);border-radius:8px;padding:4px 6px;box-shadow:inset 0 1px 3px rgba(0,0,0,.12)}
+.cards{grid-template-columns:repeat(auto-fill,minmax(330px,1fr))}
+.modal{position:fixed;inset:0;background:rgba(40,45,90,.35);backdrop-filter:blur(6px);display:none;align-items:flex-start;justify-content:center;overflow:auto;padding:24px 12px;z-index:50}
+.modal.on{display:flex}.modal .tile{width:min(1100px,100%);background:linear-gradient(145deg,#fff,#f1f3ff)}
+h2{margin:0 0 10px;font-size:16px}h3{margin:14px 0 8px;font-size:14px}
+input.s{width:90px;font:inherit;border:1px solid #cdd3f2;border-radius:8px;padding:4px 6px;text-align:right}input.t{width:150px;text-align:left}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px}.note{font-size:12px;color:var(--mut)}
+</style></head><body>
+<div class="smoke"><i></i><i></i><i></i></div>
+<div class="wrap">
+<header><div><h1>Smart Portfolio Manager</h1><div class="sub" id="asof"></div></div>
+<div class="row" style="margin:0"><label class="btn pri">Upload trade file<input id="up" type="file" accept=".xlsx,.xls,.csv" hidden></label></div></header>
+<div class="tick" id="tick"></div>
+<div class="tabs" id="tabs"></div>
+<div id="view"></div>
+</div>
+<div class="modal" id="md"><div class="tile" id="mc"></div></div>
+<script>
+const TR=[[46335,"S1MU001","MANJU SHARMA","IRB","B",5000,18.27],[46335,"S1MU001","MANJU SHARMA","RECLTD","B",1000,302.4],[46335,"S1MU003","ANISHA SINGH","IRB","B",5000,18.27],[46335,"S1MU003","ANISHA SINGH","RECLTD","B",1000,302.4],[46335,"S1MU027","SHAKUNTALA JOSHI","IRB","B",5000,18.27],[46335,"S1MU027","SHAKUNTALA JOSHI","RECLTD","B",1000,302.4],[46335,"S1MU033","MANOJ JOSHI","RECLTD","B",1000,302.4],[46335,"S1MU050","SURAJ JOSHI","IRB","B",5000,18.27],[46335,"S1MU050","SURAJ JOSHI","RECLTD","B",1000,302.4],[46335,"S1MY003","SWATI JOSHI","RECLTD","B",1000,302.4],[46337,"S1MU001","MANJU SHARMA","FINCABLES","B",100,1254.0],[46337,"S1MU001","MANJU SHARMA","PARADEEP","B",500,147.5],[46337,"S1MU001","MANJU SHARMA","RECLTD","S",1000,313.6],[46337,"S1MU003","ANISHA SINGH","FINCABLES","B",100,1254.0],[46337,"S1MU003","ANISHA SINGH","PARADEEP","B",500,147.5],[46337,"S1MU003","ANISHA SINGH","RECLTD","S",1000,313.6],[46337,"S1MU027","SHAKUNTALA JOSHI","FINCABLES","B",100,1254.0],[46337,"S1MU027","SHAKUNTALA JOSHI","PARADEEP","B",500,147.5],[46337,"S1MU027","SHAKUNTALA JOSHI","RECLTD","S",1000,313.6],[46337,"S1MU033","MANOJ JOSHI","FINCABLES","B",100,1254.0],[46337,"S1MU033","MANOJ JOSHI","RECLTD","S",1000,313.6],[46337,"S1MU050","SURAJ JOSHI","FINCABLES","B",100,1254.0],[46337,"S1MU050","SURAJ JOSHI","PARADEEP","B",500,147.5],[46337,"S1MU050","SURAJ JOSHI","RECLTD","S",1000,313.6],[46337,"S1MY003","SWATI JOSHI","FINCABLES","B",100,1254.0],[46337,"S1MY003","SWATI JOSHI","RECLTD","S",1000,313.6]],LT={"RECLTD":[304.8,310.15],"IRB":[19.07,18.75],"FINCABLES":[1253.1,1226.1],"PARADEEP":[143.8,143.7]};
+const S={trades:TR.map(r=>({d:(r[0]-25569)*864e5,c:r[1],n:r[2],s:r[3],side:r[4],q:r[5],p:r[6]})),ltp:{},prev:{},brk:{},info:{},open:{},rate:18,
+levy:{stt:.1,txn:.00297,sebi:.0001,stamp:.015,gst:18},dbrk:.25};
+for(const k in LT){S.ltp[k]=LT[k][0];S.prev[k]=LT[k][1]}
+try{const x=JSON.parse(localStorage.getItem('spm1')||'null');if(x&&x.trades&&x.trades.length)Object.assign(S,x)}catch(e){}
+const sv=()=>{try{localStorage.setItem('spm1',JSON.stringify(S))}catch(e){}};
+const n=(v,d=0)=>(+v).toLocaleString('en-IN',{minimumFractionDigits:d,maximumFractionDigits:d});
+const cl=v=>v>=0?'p':'n',pc=v=>`<span class="${cl(v)}">${v>=0?'+':''}${n(v,2)}%</span>`,am=v=>`<span class="${cl(v)}">${n(v)}</span>`;
+const fd=ms=>new Date(ms).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit'});
+const DAY=864e5,TODAY=Math.floor(Date.now()/DAY)*DAY;
+function chg(c,side,v){const b=v*(S.brk[c]??S.dbrk)/100,x=v*S.levy.txn/100,s=v*S.levy.sebi/100;
+return b+x+s+v*S.levy.stt/100+(side=='B'?v*S.levy.stamp/100:0)+(b+x+s)*S.levy.gst/100}
+let D;
+function calc(){const L={},R=[],led={},names={};
+for(const t of [...S.trades].sort((a,b)=>a.d-b.d)){names[t.c]=t.n;const k=t.c+'|'+t.s,v=t.q*t.p,ch=chg(t.c,t.side,v);
+if(t.side=='B'){led[t.c]=(led[t.c]||0)+v+ch;(L[k]=L[k]||[]).push({c:t.c,s:t.s,d:t.d,rem:t.q,ps:(v+ch)/t.q})}
+else{led[t.c]=(led[t.c]||0)-(v-ch);const ps=(v-ch)/t.q;let nd=t.q;
+for(const l of L[k]||[]){if(!nd)break;const x=Math.min(l.rem,nd);if(x<=0)continue;const days=Math.max(0,Math.round((t.d-l.d)/DAY)),buy=l.ps*x,sell=ps*x,int=buy*S.rate/100*days/365;
+R.push({c:t.c,s:t.s,bd:l.d,sd:t.d,q:x,days,buy,sell,int});l.rem-=x;nd-=x}}}
+const H=[];Object.values(L).flat().forEach(l=>{if(l.rem<=0)return;const ltp=S.ltp[l.s]||l.ps,buy=l.ps*l.rem,days=Math.round((TODAY-l.d)/DAY),int=buy*S.rate/100*days/365;
+H.push({c:l.c,s:l.s,d:l.d,q:l.rem,buy,days,int,coh:buy+int,val:ltp*l.rem,ltp})});
+for(const c in names)led[c]=(led[c]||0)+(S.open[c]||0);
+D={R,H,led,names,clients:Object.keys(names).sort(),syms:[...new Set(S.trades.map(t=>t.s))]}}
+function ag(rows){const a={q:0,buy:0,int:0,coh:0,val:0,dw:0,old:0};rows.forEach(r=>{a.q+=r.q;a.buy+=r.buy;a.int+=r.int;a.coh+=r.coh;a.val+=r.val;a.dw+=r.days*r.buy;a.old=Math.max(a.old,r.days)});
+a.pl=a.val-a.buy;a.plp=a.buy?a.pl/a.buy*100:0;a.plc=a.val-a.coh;a.plcp=a.coh?a.plc/a.coh*100:0;a.days=a.buy?a.dw/a.buy:0;a.bp=a.q?a.buy/a.q:0;a.cp=a.q?a.coh/a.q:0;a.ltp=a.q?a.val/a.q:0;return a}
+const HEAD=`<th>Qty</th><th>Buy price</th><th>LTP</th><th>P&amp;L</th><th>P&amp;L %</th><th>Cost price</th><th>P&amp;L</th><th>P&amp;L %</th><th>Avg days</th>`;
+const hcells=a=>`<td>${n(a.q)}</td><td>${n(a.bp,2)}</td><td>${n(a.ltp,2)}</td><td>${am(a.pl)}</td><td>${pc(a.plp)}</td><td>${n(a.cp,2)}</td><td>${am(a.plc)}</td><td>${pc(a.plcp)}</td><td>${n(a.days,0)}</td>`;
+const grp=(rows,f)=>{const m={};rows.forEach(r=>(m[f(r)]=m[f(r)]||[]).push(r));return m};
+let tab='dash',hz=5;
+const TABS={dash:'Dashboard',scrip:'Scripwise holdings',fifo:'FIFO realised P&L',liq:'Liquidation planner',calls:'Live calls & recovery',set:'Setup & files'};
+function nav(){document.getElementById('tabs').innerHTML=Object.entries(TABS).map(([k,v])=>`<button class="tab ${k==tab?'on':''}" onclick="tab='${k}';draw()">${v}</button>`).join('')}
+function ticker(){document.getElementById('tick').innerHTML=D.syms.map(s=>{const p=S.prev[s]||S.ltp[s],c=p?(S.ltp[s]/p-1)*100:0;
+return `<div class="tile"><div class="sub"><b>${s}</b> ${pc(c)}</div><input type="number" step="0.05" value="${(S.ltp[s]||0).toFixed(2)}" onchange="S.ltp['${s}']=+this.value;sv();draw()"></div>`}).join('')}
+function dash(){const per=D.clients.map(c=>{const a=ag(D.H.filter(h=>h.c==c));return{c,a,led:D.led[c]||0}});
+const T=ag(D.H),led=per.reduce((x,p)=>x+p.led,0),nw=T.val-led;
+const k=[['Clients',D.clients.length],['Holding cost (buy rate)',n(T.buy)],['Holding value (LTP)',n(T.val)],['Holding cost (cost of holding)',n(T.coh)],['Net worth (value − ledger)',n(nw)],['P&amp;L % (buy / cost of holding)',pc(T.plp)+' / '+pc(T.plcp)]];
+return `<div class="grid kpis">${k.map(x=>`<div class="tile k"><div class="l">${x[0]}</div><div class="v">${x[1]}</div></div>`).join('')}</div>
+<div class="tile"><h2>Clients <span class="sub">— click a client code for details &amp; holdings</span></h2><div class="sc"><table><tr><th>Client</th><th class="tl">Name</th><th>Ledger (Dr)</th><th>Holding cost (buy)</th><th>Holding value (LTP)</th><th>Cost of holding</th><th>Net worth</th><th>P&amp;L % buy</th><th>P&amp;L % COH</th></tr>
+${per.map(p=>`<tr><td><a class="cc" onclick="client('${p.c}')">${p.c}</a></td><td class="tl">${D.names[p.c]}</td><td>${n(p.led)}</td><td>${n(p.a.buy)}</td><td>${n(p.a.val)}</td><td>${n(p.a.coh)}</td><td>${am(p.a.val-p.led)}</td><td>${pc(p.a.plp)}</td><td>${pc(p.a.plcp)}</td></tr>`).join('')}</table></div></div>`}
+function client(c){const i=S.info[c]||{},hs=D.H.filter(h=>h.c==c),a=ag(hs),g=grp(hs,h=>h.s);
+const f=(l,v)=>`<div><div class="sub">${l}</div><b>${v||'<span class="note">add in Setup</span>'}</b></div>`;
+mc.innerHTML=`<div class="row" style="justify-content:space-between"><h2>${c} — ${D.names[c]}</h2><button class="btn" onclick="md.classList.remove('on')">Close</button></div>
+<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr));margin-bottom:10px">${f('Name',D.names[c])}${f('Contact',i.ph)}${f('PAN',i.pan)}${f('Email',i.em)}${f('Ledger (Dr)',n(D.led[c]||0))}${f('Net worth',n(a.val-(D.led[c]||0)))}</div>
+<h3>Scrip-wise holdings</h3><div class="sc"><table><tr><th class="tl">Script</th>${HEAD}</tr>${Object.entries(g).map(([s,r])=>`<tr><td class="tl"><b>${s}</b></td>${hcells(ag(r))}</tr>`).join('')}<tr><td class="tl"><b>Total</b></td>${hcells(a)}</tr></table></div>
+<h3>Lot-wise (FIFO, with interest @ ${S.rate}%)</h3><div class="sc"><table><tr><th class="tl">Script</th><th>Buy date</th><th>Days</th><th>Qty</th><th>Buy amt (incl. charges)</th><th>Interest</th><th>Cost of holding</th><th>Value</th><th>P&amp;L buy</th><th>P&amp;L COH</th></tr>
+${hs.map(h=>`<tr><td class="tl">${h.s}</td><td>${fd(h.d)}</td><td>${h.days}</td><td>${n(h.q)}</td><td>${n(h.buy)}</td><td>${n(h.int)}</td><td>${n(h.coh)}</td><td>${n(h.val)}</td><td>${am(h.val-h.buy)}</td><td>${am(h.val-h.coh)}</td></tr>`).join('')}</table></div>`;md.classList.add('on')}
+function scrip(){return `<div class="grid">${D.syms.map(s=>{const hs=D.H.filter(h=>h.s==s);if(!hs.length)return'';const a=ag(hs),g=grp(hs,h=>h.c);
+return `<div class="tile"><h2>${s} <span class="chip">LTP ${n(S.ltp[s],2)}</span><span class="chip g">${Object.keys(g).length} clients</span></h2><div class="sc"><table><tr><th class="tl">Client</th><th class="tl">Name</th>${HEAD}</tr>
+${Object.entries(g).map(([c,r])=>`<tr><td class="tl"><a class="cc" onclick="client('${c}')">${c}</a></td><td class="tl">${D.names[c]}</td>${hcells(ag(r))}</tr>`).join('')}<tr><td class="tl"><b>Total</b></td><td></td>${hcells(a)}</tr></table></div></div>`}).join('')}</div>`}
+function fifo(){const R=D.R,t=R.reduce((x,r)=>({b:x.b+r.buy,s:x.s+r.sell,i:x.i+r.int}),{b:0,s:0,i:0});
+return `<div class="grid kpis"><div class="tile k"><div class="l">Realised P&amp;L (price + charges)</div><div class="v">${am(t.s-t.b)}</div></div><div class="tile k"><div class="l">Interest on sold lots</div><div class="v">${n(t.i)}</div></div><div class="tile k"><div class="l">Realised after interest</div><div class="v">${am(t.s-t.b-t.i)}</div></div></div>
+<div class="tile"><h2>FIFO matched sells</h2><div class="sc"><table><tr><th>Client</th><th class="tl">Script</th><th>Buy date</th><th>Sell date</th><th>Days</th><th>Qty</th><th>Buy (incl. chg)</th><th>Sell (net chg)</th><th>P&amp;L</th><th>P&amp;L %</th><th>Interest</th><th>P&amp;L after int.</th><th>%</th></tr>
+${R.length?R.map(r=>{const p=r.sell-r.buy;return `<tr><td><a class="cc" onclick="client('${r.c}')">${r.c}</a></td><td class="tl">${r.s}</td><td>${fd(r.bd)}</td><td>${fd(r.sd)}</td><td>${r.days}</td><td>${n(r.q)}</td><td>${n(r.buy)}</td><td>${n(r.sell)}</td><td>${am(p)}</td><td>${pc(p/r.buy*100)}</td><td>${n(r.int)}</td><td>${am(p-r.int)}</td><td>${pc((p-r.int)/(r.buy+r.int)*100)}</td></tr>`}).join(''):'<tr><td colspan="13">No sells yet</td></tr>'}</table></div></div>`}
+function liq(){const rows=D.clients.map(c=>{const hs=D.H.filter(h=>h.c==c),extra=hs.reduce((x,h)=>x+h.buy*S.rate/100*hz/365,0),need=Math.max(0,(D.led[c]||0)+hs.reduce((x,h)=>x+h.int,0)+extra);
+const sc=hs.map(h=>{const p=(h.val-h.buy)/h.buy*100;return{...h,p,b:p>0?0:p>-5?1:2}}).sort((a,b)=>a.b-b.b||(a.b==0?b.p-a.p||b.d-a.d:b.p-a.p));
+let acc=0;const pick=[];for(const h of sc){if(acc>=need)break;pick.push(h);acc+=h.val}return{c,need,pick,acc}});
+const tot=rows.reduce((x,r)=>x+r.need,0),B=['LIFO · max gain','Min loss','Other'],BC=['g','a','r'];
+return `<div class="row">${[5,6,7,14,30].map(d=>`<button class="btn ${d==hz?'pri':''}" onclick="hz=${d};draw()">T+${d}</button>`).join('')}<span class="chip">Total required ${n(tot)}</span></div>
+<p class="note">Required = ledger debit + interest accrued to T+${hz}. Sell order: gaining lots first (highest gain, latest buy first), then smallest losses, then all other holdings.</p>
+<div class="grid">${rows.map(r=>`<div class="tile"><h2><a class="cc" onclick="client('${r.c}')">${r.c}</a> ${D.names[r.c]} <span class="chip a">Need ${n(r.need)}</span><span class="chip g">Raised ${n(r.acc)}</span></h2>${r.pick.length?`<div class="sc"><table><tr><th class="tl">Script</th><th>Buy date</th><th>Qty</th><th>Value</th><th>P&amp;L %</th><th class="tl">Bucket</th></tr>${r.pick.map(h=>`<tr><td class="tl">${h.s}</td><td>${fd(h.d)}</td><td>${n(h.q)}</td><td>${n(h.val)}</td><td>${pc(h.p)}</td><td class="tl"><span class="chip ${BC[h.b]}">${B[h.b]}</span></td></tr>`).join('')}</table></div>`:'<span class="note">No liquidation needed</span>'}</div>`).join('')}</div>`}
+function calls(){const cs=D.syms.map(s=>{const hs=D.H.filter(h=>h.s==s);if(!hs.length)return null;const a=ag(hs),p=S.prev[s]||a.ltp,c=(a.ltp/p-1)*100,cls=[...new Set(hs.map(h=>h.c))];
+const gap=a.cp-a.ltp,gp=gap/a.ltp*100;let call,ch;
+if(a.ltp>=a.cp){call=`BOOK / TRADE: LTP is above cost of holding. Selling all ${n(a.q)} locks ₹${n(a.plc)} (${n(a.plcp,2)}%).`;ch='g'}
+else if(c>0){call=`RECOVERY CALL: stock moving up. Exit at ₹${n(a.cp,2)} (cost of holding) — price difference ₹${n(gap,2)} (+${n(gp,2)}%), expected recovery ₹${n(gap*a.q)}.`;ch='a'}
+else{call=`WATCH: below cost by ₹${n(gap,2)}. Needs +${n(gp,2)}% to break even; target ₹${n(a.cp,2)} recovers ₹${n(gap*a.q)}.`;ch='r'}
+return{s,a,c,cls,call,ch,gap}}).filter(Boolean).sort((x,y)=>Math.abs(y.c)-Math.abs(x.c));
+return `<p class="note">Cards re-rank by size of today’s move so the most active stock is always first. Edit LTP in the price strip above; calls update instantly.</p><div class="grid cards">${cs.map(x=>`<div class="tile"><h2>${x.s} ${x.c>=0?'▲':'▼'} ${pc(x.c)}</h2>
+<div class="row"><span class="chip">LTP ${n(x.a.ltp,2)}</span><span class="chip">Avg buy ${n(x.a.bp,2)}</span><span class="chip">Cost price ${n(x.a.cp,2)}</span></div>
+<div class="row"><span class="chip ${x.ch}">${x.ch=='g'?'Profit':'Underwater'}: ${am(x.a.plc)}</span><span class="chip">Qty ${n(x.a.q)}</span></div>
+<p style="margin:6px 0"><b>${x.call}</b></p><div class="sub">Clients holding:</div>${x.cls.map(c=>`<a class="chip" style="cursor:pointer" onclick="client('${c}')">${c}</a>`).join('')}</div>`).join('')}</div>`}
+function setup(){return `<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(340px,1fr))">
+<div class="tile"><h2>Interest &amp; levies</h2><div class="row"><label>Interest % p.a. <input class="s" type="number" value="${S.rate}" onchange="S.rate=+this.value;sv();draw()"></label><label>Default brokerage % <input class="s" type="number" step="0.01" value="${S.dbrk}" onchange="S.dbrk=+this.value;sv();draw()"></label></div>
+<div class="row">${Object.keys(S.levy).map(k=>`<label>${k.toUpperCase()} % <input class="s" type="number" step="0.00001" value="${S.levy[k]}" onchange="S.levy['${k}']=+this.value;sv();draw()"></label>`).join('')}</div>
+<p class="note">STT on both sides, stamp on buy, GST on brokerage + txn + SEBI. Update when rates change. Daily uploads are merged and de-duplicated.</p></div>
+<div class="tile"><h2>Data</h2><div class="row"><button class="btn" onclick="exp()">Export trades (CSV)</button><button class="btn" onclick="if(confirm('Delete all saved data and reload sample?')){localStorage.removeItem('spm1');location.reload()}">Reset to sample</button></div><p class="note">${S.trades.length} trades loaded. Upload new daily trade files with the button at the top (columns as in your sample file).</p></div></div>
+<div class="tile" style="margin-top:12px"><h2>Client master: brokerage scheme, ledger &amp; contact</h2><div class="sc"><table><tr><th>Client</th><th class="tl">Name</th><th>Brokerage %</th><th>Opening ledger Dr</th><th class="tl">Phone</th><th class="tl">PAN</th><th class="tl">Email</th></tr>
+${D.clients.map(c=>{const i=S.info[c]||{};const t=(k,v)=>`<td class="tl"><input class="s t" value="${v||''}" onchange="(S.info['${c}']=S.info['${c}']||{}).${k}=this.value;sv()"></td>`;
+return `<tr><td>${c}</td><td class="tl">${D.names[c]}</td><td><input class="s" type="number" step="0.01" value="${S.brk[c]??S.dbrk}" onchange="S.brk['${c}']=+this.value;sv();draw()"></td><td><input class="s" type="number" value="${S.open[c]||0}" onchange="S.open['${c}']=+this.value;sv();draw()"></td>${t('ph',i.ph)}${t('pan',i.pan)}${t('em',i.em)}</tr>`}).join('')}</table></div></div>`}
+function exp(){const r=['Date,Client,Name,Symbol,Side,Qty,Price',...S.trades.map(t=>[new Date(t.d).toISOString().slice(0,10),t.c,t.n,t.s,t.side,t.q,t.p].join(','))];
+const a=document.createElement('a');a.href='data:text/csv,'+encodeURIComponent(r.join('\n'));a.download='trades.csv';a.click()}
+function draw(){calc();document.getElementById('asof').textContent=`LTP = manually entered / last snapshot, not a live feed · interest ${S.rate}% p.a. · ${fd(TODAY)}`;nav();ticker();
+document.getElementById('view').innerHTML={dash,scrip,fifo,liq,calls,set:setup}[tab]()}
+document.getElementById('up').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const wb=XLSX.read(await f.arrayBuffer(),{cellDates:false});
+const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);const seen=new Set(S.trades.map(t=>[t.d,t.c,t.s,t.side,t.q,t.p].join()));let add=0;
+rows.forEach(r=>{let d=r['Date'];if(typeof d=='string'){d=Date.parse(d)}else d=(d-25569)*864e5;if(!r['Client']||isNaN(d))return;
+[['B',r['Buy Qty'],r['Buy Avg.']],['S',r['Sell Qty'],r['Sell Avg.']]].forEach(([side,q,p])=>{if(!(q>0))return;const t={d,c:r['Client'],n:r['Client Name'],s:r['Symbol'],side,q:+q,p:+p},k=[t.d,t.c,t.s,t.side,t.q,t.p].join();
+if(seen.has(k))return;seen.add(k);S.trades.push(t);add++;if(!S.ltp[t.s])S.ltp[t.s]=t.p})});sv();draw();alert(add+' new trades added. Set LTP for any new script in the price strip.')}catch(x){alert('Could not read file: '+x.message)}e.target.value=''};
+md.onclick=e=>{if(e.target==md)md.classList.remove('on')};
+draw();
+</script></body></html>
